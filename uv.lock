@@ -23,7 +23,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "agentixx", specifier = ">=0.2.1" },
+    { name = "agentixx", specifier = ">=0.2.2" },
     { name = "fastapi", specifier = ">=0.115" },
     { name = "openai", specifier = ">=1.40" },
     { name = "pyright", marker = "extra == 'dev'", specifier = ">=1.1.380" },
@@ -36,7 +36,7 @@ provides-extras = ["dev"]
 
 [[package]]
 name = "agentixx"
-version = "0.2.1"
+version = "0.2.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "fastapi" },
@@ -47,9 +47,9 @@ dependencies = [
     { name = "python-socketio", extra = ["asyncio-client"] },
     { name = "uvicorn", extra = ["standard"] },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f7/06/1473f84feca086bf3267eea28d15e241bd09c750e09a318f1063b8d854a7/agentixx-0.2.1.tar.gz", hash = "sha256:19f065790711f4679c552ba82bba5f5837a1e43f157ef696b068b6ad38009472", size = 194676, upload-time = "2026-05-19T19:29:04.969Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/eb/99/d7e6ffcbb9b344972fd557c5d037369e5613863eb0274235cbc2f5a76f7d/agentixx-0.2.2.tar.gz", hash = "sha256:0ea822fb5654e681a00edd35285fe6e3c203516ccfe14906320d96a8bd08ecd6", size = 186776, upload-time = "2026-05-19T21:20:45.561Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/47/27/cdab7f88846a8f1ff80b3ae26d6a20bc1645eff0cdba2ee207aa54d994ec/agentixx-0.2.1-py3-none-any.whl", hash = "sha256:22e1c03d01fd049d6115c9ab14f78f7db11a38b13f0d9605cb458e232bfa7b8e", size = 60364, upload-time = "2026-05-19T19:29:02.39Z" },
+    { url = "https://files.pythonhosted.org/packages/de/3f/7131c83c1718d3fa332059db64017e05e81dab77cf1088025debc073dcb0/agentixx-0.2.2-py3-none-any.whl", hash = "sha256:9917bb09527fbf6077ea901366c59c6f8a170dd2025c5b22e76b26344e7997d1", size = 60678, upload-time = "2026-05-19T21:20:43.068Z" },
 ]
 
 [[package]]
