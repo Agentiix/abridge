@@ -1,10 +1,10 @@
-"""abridge — provider-shape HTTP services that bridge the agentix
+"""agentix.bridge — provider-shape HTTP services that bridge the agentix
 sandbox boundary so credentials and HTTP calls stay host-side.
 
 Two services today, one subpackage each:
 
-    import abridge.anthropic   # /v1/messages → OpenAI on host
-    import abridge.oai         # /v1/chat/completions → OpenAI on host
+    import agentix.bridge.anthropic   # /v1/messages → OpenAI on host
+    import agentix.bridge.oai         # /v1/chat/completions → OpenAI on host
 
 (`oai` rather than `openai` so it doesn't shadow the upstream
 `openai` package — same idea as `agentixx` on PyPI.)

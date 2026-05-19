@@ -21,9 +21,8 @@ import logging
 from typing import TYPE_CHECKING, Any
 
 from agentix import AsyncClientNamespace
-
-from abridge.anthropic.service import NAMESPACE
-from abridge.anthropic.translate import (
+from agentix.bridge.anthropic.service import NAMESPACE
+from agentix.bridge.anthropic.translate import (
     anthropic_to_openai_body,
     openai_to_anthropic_response,
 )
@@ -31,7 +30,7 @@ from abridge.anthropic.translate import (
 if TYPE_CHECKING:
     from openai import AsyncOpenAI
 
-logger = logging.getLogger("abridge.anthropic.gateway")
+logger = logging.getLogger("agentix.bridge.anthropic.gateway")
 
 
 class OpenAIGateway(AsyncClientNamespace):

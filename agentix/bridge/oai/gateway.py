@@ -17,13 +17,12 @@ import logging
 from typing import TYPE_CHECKING, Any
 
 from agentix import AsyncClientNamespace
-
-from abridge.oai.service import NAMESPACE
+from agentix.bridge.oai.service import NAMESPACE
 
 if TYPE_CHECKING:
     from openai import AsyncOpenAI
 
-logger = logging.getLogger("abridge.oai.gateway")
+logger = logging.getLogger("agentix.bridge.oai.gateway")
 
 
 class OpenAIGateway(AsyncClientNamespace):

@@ -1,10 +1,10 @@
-"""abridge.oai — OpenAI-shaped sandbox service.
+"""agentix.bridge.oai — OpenAI-shaped sandbox service.
 
 Pair a sandbox `start_service` with a host `*Gateway`. The Gateway
 suffix names the upstream provider:
 
     # OpenAI interface ← OpenAI upstream (pass-through, credentials host-side)
-    import abridge.oai as openai_bridge
+    import agentix.bridge.oai as openai_bridge
     gateway = openai_bridge.OpenAIGateway(
         client=openai.AsyncOpenAI(base_url=..., api_key=...),
         upstream_model="gpt-4o-mini",
@@ -20,8 +20,8 @@ suffix names the upstream provider:
 
 from __future__ import annotations
 
-from abridge.oai.gateway import OpenAIGateway
-from abridge.oai.service import (
+from agentix.bridge.oai.gateway import OpenAIGateway
+from agentix.bridge.oai.service import (
     NAMESPACE,
     ServiceHandle,
     start_service,

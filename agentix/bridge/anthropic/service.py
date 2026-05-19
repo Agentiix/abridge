@@ -1,41 +1,45 @@
-"""Sandbox-side OpenAI-shaped service — exposes `/v1/chat/completions`
-and forwards each call verbatim to the host via `/abridge-openai`.
+"""Sandbox-side Anthropic service — exposes `/v1/messages` and ships
+the raw Anthropic body to the host. No translation runs here.
 
-No translation is needed: the agent already speaks OpenAI; we just
-relay the request body to the host and pass the response straight
-back. Use this when your agent SDK is OpenAI-compatible (the OpenAI
-SDK itself, LiteLLM, instructor, ...).
+The host's `Gateway` is what knows how to call OpenAI; it does the
+Anthropic ↔ OpenAI conversion and returns an Anthropic-shaped
+response that the sandbox renders straight back (as JSON or SSE).
 
 Flow:
 
-  agent → POST /v1/chat/completions →
-  abridge sandbox emits `openai_complete` on `/abridge-openai` →
-  host's `Gateway.on_openai_complete` calls AsyncOpenAI →
-  emits `openai_complete:result` → sandbox returns the body to agent.
+  agent → POST /v1/messages →
+  sandbox emits `anthropic_complete` on `/abridge-anthropic` (raw body) →
+  host's `Gateway.on_anthropic_complete` translates + calls AsyncOpenAI →
+  emits `anthropic_complete:result` with an Anthropic-shaped dict →
+  sandbox returns JSON, or renders SSE if `stream=true` was requested.
 """
 
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
 from dataclasses import dataclass
 from typing import Any
 
-import agentix
 import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, Response, StreamingResponse
 
-logger = logging.getLogger("abridge.oai.service")
+import agentix
+from agentix.bridge.anthropic.translate import anthropic_stream_sse
 
-NAMESPACE = "/abridge-openai"
+logger = logging.getLogger("agentix.bridge.anthropic.service")
+
+NAMESPACE = "/abridge-anthropic"
 
 
 # ── namespace ────────────────────────────────────────────────────
 
 
 class _SandboxNamespace(agentix.Namespace):
+    """Sandbox half. Owns one `anthropic_complete` request/reply
+    round-trip per `/v1/messages` HTTP call."""
+
     namespace = NAMESPACE
 
 
@@ -77,10 +81,11 @@ async def start_service(
     port: int = 0,
     request_timeout: float = 600.0,
 ) -> ServiceHandle:
-    """Start the OpenAI-shaped HTTP proxy inside the sandbox.
+    """Start the Anthropic-shaped HTTP proxy inside the sandbox.
 
-    `response_model` is the model id the proxy echoes back to the
-    agent. The actual upstream model is the host gateway's concern.
+    `response_model` is what the proxy echoes back as `response.model`
+    so the agent sees the model id it asked for. The actual upstream
+    model id is the host's gateway concern.
     """
     ns = _get_namespace()
     app = _build_app(
@@ -116,7 +121,7 @@ async def start_service(
         port=bound_port,
     )
     _running[sid] = _RunningService(handle=handle, server=server, task=task)
-    logger.info("abridge openai service %s started at %s", sid, handle.url)
+    logger.info("abridge anthropic service %s started at %s", sid, handle.url)
     return handle
 
 
@@ -148,30 +153,41 @@ def _build_app(
         return {
             "status": "ok",
             "service": "abridge",
-            "shape": "openai",
+            "shape": "anthropic",
             "response_model": response_model,
         }
 
-    @app.post("/v1/chat/completions")
-    async def chat_completions(request: Request) -> Response:
+    @app.post("/v1/messages/count_tokens")
+    async def count_tokens(request: Request):
+        body = await request.json()
+        messages = body.get("messages", [])
+        total = sum(len(str(m.get("content", ""))) for m in messages)
+        return {"input_tokens": total // 4}
+
+    @app.post("/v1/messages")
+    async def messages(request: Request) -> Response:
         body = await request.json()
         stream_requested = bool(body.pop("stream", False))
 
         try:
-            resp = await ns.request("openai_complete", body, timeout=request_timeout)
+            anthropic_resp = await ns.request(
+                "anthropic_complete",
+                body,
+                timeout=request_timeout,
+            )
         except agentix.RemoteSioError as exc:
             return JSONResponse(
                 status_code=502,
                 content={"error": {"type": exc.type, "message": exc.message}},
             )
         except Exception as exc:
-            logger.exception("abridge openai request failed")
+            logger.exception("abridge anthropic request failed")
             return JSONResponse(
                 status_code=500,
                 content={"error": {"type": type(exc).__name__, "message": str(exc)}},
             )
 
-        if not isinstance(resp, dict):
+        if not isinstance(anthropic_resp, dict):
             return JSONResponse(
                 status_code=502,
                 content={
@@ -182,58 +198,23 @@ def _build_app(
                 },
             )
 
-        # Rewrite the response model to what the agent expects.
-        resp = dict(resp)
-        resp["model"] = response_model
+        # Force the response's model field to what the agent asked for.
+        anthropic_resp = dict(anthropic_resp)
+        anthropic_resp["model"] = response_model
 
         if stream_requested:
+            sse_payload = anthropic_stream_sse(anthropic_resp)
             return StreamingResponse(
-                _openai_sse_chunks(resp),
+                _stream_bytes(sse_payload),
                 media_type="text/event-stream",
             )
-        return JSONResponse(content=resp)
+        return JSONResponse(content=anthropic_resp)
 
     return app
 
 
-async def _openai_sse_chunks(resp: dict):
-    """Replay a non-streaming OpenAI response as a single-chunk SSE
-    stream — the same buffer-and-replay strategy we use for Anthropic.
-    """
-    choice = (resp.get("choices") or [{}])[0]
-    message = choice.get("message") or {}
-    text = message.get("content") or ""
-    model = resp.get("model", "")
-    chunk_id = resp.get("id") or "chatcmpl-buffered"
-
-    first = {
-        "id": chunk_id,
-        "object": "chat.completion.chunk",
-        "model": model,
-        "choices": [
-            {
-                "index": 0,
-                "delta": {"role": "assistant", "content": text},
-                "finish_reason": None,
-            }
-        ],
-    }
-    last = {
-        "id": chunk_id,
-        "object": "chat.completion.chunk",
-        "model": model,
-        "choices": [
-            {
-                "index": 0,
-                "delta": {},
-                "finish_reason": choice.get("finish_reason", "stop"),
-            }
-        ],
-        "usage": resp.get("usage"),
-    }
-    yield f"data: {json.dumps(first)}\n\n".encode()
-    yield f"data: {json.dumps(last)}\n\n".encode()
-    yield b"data: [DONE]\n\n"
+async def _stream_bytes(payload: bytes):
+    yield payload
 
 
 __all__ = [

@@ -16,9 +16,9 @@ import socket
 import httpx
 import pytest
 import uvicorn
-from agentix import RuntimeClient
 
-import abridge.anthropic
+import agentix.bridge.anthropic
+from agentix import RuntimeClient
 
 # ── Stub OpenAI client (subset that Gateway needs) ──
 
@@ -114,13 +114,13 @@ async def runtime_url():
 @pytest.mark.asyncio
 async def test_anthropic_messages_round_trip_non_streaming(runtime_url):
     stub = _StubClient(model="stub-model")
-    gateway = abridge.anthropic.OpenAIGateway(client=stub, upstream_model="stub-model")
+    gateway = agentix.bridge.anthropic.OpenAIGateway(client=stub, upstream_model="stub-model")
 
     client = RuntimeClient(runtime_url)
     client.register_namespace(gateway)
     async with client as c:
         svc = await c.remote(
-            abridge.anthropic.start_service,
+            agentix.bridge.anthropic.start_service,
             response_model="claude-3-5-sonnet-latest",
         )
         async with httpx.AsyncClient(base_url=svc.url, timeout=10) as http:
@@ -141,7 +141,7 @@ async def test_anthropic_messages_round_trip_non_streaming(runtime_url):
         assert body["usage"]["output_tokens"] == 4
 
         with contextlib.suppress(Exception):
-            await c.remote(abridge.anthropic.stop_service, handle=svc)
+            await c.remote(agentix.bridge.anthropic.stop_service, handle=svc)
 
     assert len(stub.chat.completions.calls) == 1
     assert stub.chat.completions.calls[0]["model"] == "stub-model"
@@ -152,13 +152,13 @@ async def test_anthropic_messages_streaming_replays_as_sse(runtime_url):
     """When the agent asks for `stream=true`, abridge buffers the
     upstream non-stream response and replays it as Anthropic SSE."""
     stub = _StubClient(model="stub-model")
-    gateway = abridge.anthropic.OpenAIGateway(client=stub, upstream_model="stub-model")
+    gateway = agentix.bridge.anthropic.OpenAIGateway(client=stub, upstream_model="stub-model")
 
     client = RuntimeClient(runtime_url)
     client.register_namespace(gateway)
     async with client as c:
         svc = await c.remote(
-            abridge.anthropic.start_service,
+            agentix.bridge.anthropic.start_service,
             response_model="claude-3-5-sonnet-latest",
         )
         async with httpx.AsyncClient(base_url=svc.url, timeout=10) as http:
@@ -182,4 +182,4 @@ async def test_anthropic_messages_streaming_replays_as_sse(runtime_url):
         assert "event: message_stop" in text
 
         with contextlib.suppress(Exception):
-            await c.remote(abridge.anthropic.stop_service, handle=svc)
+            await c.remote(agentix.bridge.anthropic.stop_service, handle=svc)

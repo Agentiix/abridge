@@ -3,7 +3,7 @@ revision = 3
 requires-python = ">=3.11"
 
 [[package]]
-name = "abridge"
+name = "agentix-bridge"
 version = "0.2.0"
 source = { editable = "." }
 dependencies = [
@@ -23,7 +23,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "agentixx", git = "https://github.com/Agentiix/Agentix.git" },
+    { name = "agentixx", specifier = ">=0.2.1" },
     { name = "fastapi", specifier = ">=0.115" },
     { name = "openai", specifier = ">=1.40" },
     { name = "pyright", marker = "extra == 'dev'", specifier = ">=1.1.380" },
@@ -37,7 +37,7 @@ provides-extras = ["dev"]
 [[package]]
 name = "agentixx"
 version = "0.2.1"
-source = { git = "https://github.com/Agentiix/Agentix.git#906cc9ce2d877d49d49fc572ee23dbc0966a896f" }
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "fastapi" },
     { name = "httpx" },
@@ -46,6 +46,10 @@ dependencies = [
     { name = "python-multipart" },
     { name = "python-socketio", extra = ["asyncio-client"] },
     { name = "uvicorn", extra = ["standard"] },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f7/06/1473f84feca086bf3267eea28d15e241bd09c750e09a318f1063b8d854a7/agentixx-0.2.1.tar.gz", hash = "sha256:19f065790711f4679c552ba82bba5f5837a1e43f157ef696b068b6ad38009472", size = 194676, upload-time = "2026-05-19T19:29:04.969Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/47/27/cdab7f88846a8f1ff80b3ae26d6a20bc1645eff0cdba2ee207aa54d994ec/agentixx-0.2.1-py3-none-any.whl", hash = "sha256:22e1c03d01fd049d6115c9ab14f78f7db11a38b13f0d9605cb458e232bfa7b8e", size = 60364, upload-time = "2026-05-19T19:29:02.39Z" },
 ]
 
 [[package]]

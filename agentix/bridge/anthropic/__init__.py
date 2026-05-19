@@ -1,10 +1,10 @@
-"""abridge.anthropic — Anthropic-shaped sandbox service.
+"""agentix.bridge.anthropic — Anthropic-shaped sandbox service.
 
 Pair a sandbox `start_service` with a host `*Gateway`. The Gateway
 suffix names the upstream provider:
 
     # Anthropic interface ← OpenAI upstream
-    import abridge.anthropic as anthropic
+    import agentix.bridge.anthropic as anthropic
     gateway = anthropic.OpenAIGateway(
         client=openai.AsyncOpenAI(base_url=..., api_key=...),
         upstream_model="anthropic/claude-3.5-sonnet",
@@ -20,8 +20,8 @@ suffix names the upstream provider:
 
 from __future__ import annotations
 
-from abridge.anthropic.gateway import OpenAIGateway
-from abridge.anthropic.service import (
+from agentix.bridge.anthropic.gateway import OpenAIGateway
+from agentix.bridge.anthropic.service import (
     NAMESPACE,
     ServiceHandle,
     start_service,
