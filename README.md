@@ -25,11 +25,10 @@ trace.emit(...)      ──►   tap → correlate → Rollout   ──►   You
 abridge is an Agentix extension, not a competitor. It depends on the
 Agentix runtime client and plugs in via plain Python — host-side hooks
 (`agentix.trace.subscribe`, `RuntimeClient.traces()`), not the
-`agentix.namespace` / `agentix.deployment` entry-point axes that
-Agentix reserves for sandbox-lifecycle plugins. The framework only
-hands out entry-point discovery for axes that cross the
-host↔container boundary; everything else stays plain Python, and
-abridge follows that rule.
+`agentix.deployment` entry-point axis that Agentix reserves for
+sandbox-provisioning backends. The framework only hands out
+entry-point discovery for axes that cross the host↔container boundary;
+everything else stays plain Python, and abridge follows that rule.
 
 ## What's in scope
 
@@ -107,7 +106,7 @@ asyncio.run(abridge.run("http://localhost:8000", MySink()))
 | `status`     | `"closed"` once a terminal `reward` / `rollout_end` arrived      |
 | `llm_turns`  | LLM round-trips, request paired with response                    |
 | `tool_calls` | Tool invocations, call paired with result (by `id` if present)   |
-| `reward`     | Terminal reward, if the namespace emitted one                    |
+| `reward`     | Terminal reward, if sandbox-side code emitted one                |
 | `steps`      | Raw `TraceEvent`s, preserved verbatim                            |
 
 `request_body` / `response_body` keep the provider's native shape —

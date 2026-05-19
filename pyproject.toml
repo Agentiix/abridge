@@ -1,15 +1,17 @@
 [project]
 name = "abridge"
-version = "0.1.0"
-description = "Bridge Agentix agent rollouts into RL training frameworks"
+version = "0.2.0"
+description = "Anthropic-shaped HTTP proxy for OpenAI-compatible providers, bridged across the agentix sandbox boundary"
 requires-python = ">=3.11"
 dependencies = [
-    # Source: Agentix runtime exposes trace events over Socket.IO; we
-    # consume them via the same RuntimeClient the orchestrator uses, so
-    # the framework is a hard dep here (not a peer).
-    "agentix>=0.1.0",
-    "pydantic>=2.0",
+    "agentixx",
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "openai>=1.40",
 ]
+
+[tool.uv.sources]
+agentixx = { git = "https://github.com/Agentiix/Agentix.git" }
 
 [project.optional-dependencies]
 dev = [
@@ -18,10 +20,6 @@ dev = [
     "ruff>=0.6",
     "pyright>=1.1.380",
 ]
-
-[project.scripts]
-# `abridge tap http://runtime --writer jsonl --out rollouts.jsonl`
-abridge = "abridge.cli:main"
 
 [build-system]
 requires = ["hatchling"]
@@ -41,7 +39,10 @@ select = ["E", "F", "I", "W", "UP"]
 include = ["abridge", "tests"]
 exclude = ["**/__pycache__", ".venv"]
 typeCheckingMode = "basic"
-pythonVersion = "3.11"
+# pyright picks up the local uv-managed venv for third-party type stubs
+# (openai, agentix, ...).
+venvPath = "."
+venv = ".venv"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
